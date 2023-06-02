@@ -10,15 +10,24 @@ const APIURL = `https://fsa-puppy-bowl.herokuapp.com/api/${cohortName}`;
  * It fetches all players from the API and returns them
  * @returns An array of objects.
  */
-const fetchAllPlayers = async () => {
-  try {
-  } catch (err) {
-    console.error('Uh oh, trouble fetching players!', err);
-  }
-};
+// const fetchAllPlayers = async () => {
+//   try { 
+//     const responsData = await fetch(`${APIURL}/players`)
+//     console.log(responsData)
+//     const cleanData = await responsData.json()
+//     console.log(cleanData.data.players)
+//     return cleanData.data.players
+//   } catch (err) {
+//     console.error('Uh oh, trouble fetching players!', err);
+//   }
+// };
 
 const fetchSinglePlayer = async (playerId) => {
   try {
+    const responsData = await fetch(`${APIURL}/players/${playerId}`)
+    console.log(responsData)
+    const cleanData = await responsData.json()
+    console.log(cleanData.data)
   } catch (err) {
     console.error(`Oh no, trouble fetching player #${playerId}!`, err);
   }
@@ -33,6 +42,11 @@ const addNewPlayer = async (playerObj) => {
 
 const removePlayer = async (playerId) => {
   try {
+    const responsData = await fetch(`${APIURL}/players/${playerId}`, {
+        method: 'delete'
+    });
+    const resault = await responsData.json()
+    return resault
   } catch (err) {
     console.error(
       `Whoops, trouble removing player #${playerId} from the roster!`,
@@ -40,6 +54,59 @@ const removePlayer = async (playerId) => {
     );
   }
 };
+
+// const renderAllPlayers = (playerList) => {
+//     if (!playerList || !playerList.length) {
+//       playerContainer.innerHTML = '<h3>No players to display!</h3>';
+//       return;
+//     }
+
+const fetchAllPlayers = async () => {
+    try { 
+      const responsData = await fetch(`${APIURL}/players`)
+      console.log(responsData)
+      const cleanData = await responsData.json()
+      console.log(cleanData.data.players)
+    cleanData.data.players
+      let playerContainerHTML = '';
+      cleanData.data.players.map((pup) => {
+        let pupHTML = `
+          <div class="single-player-card">
+            <div class="header-info">
+              <p class="pup-title">${pup.name}</p>
+              <p class="pup-number">#${pup.id}</p>
+            </div>
+            <img src="${pup.imageUrl}" alt="photo of ${pup.name} the puppy">
+            <button class="detail-button" data-id=${pup.id}>See details</button>
+            <button class="delete-button" data-id=${pup.id}>Remove from roster</button>
+          </div>
+        `;
+        playerContainerHTML += pupHTML;
+      });
+      playerContainer.innerHTML = playerContainerHTML;
+
+      let detailButtons = [...document.getElementsByClassName('detail-button')];
+      detailButtons.forEach((button) => {
+        button.addEventListener('click', async () => {
+          const player = await fetchSinglePlayer(button.dataset.id);
+          renderSinglePlayer(player);
+        });
+      });
+    
+      let deleteButtons = [...document.getElementsByClassName('delete-button')];
+      deleteButtons.forEach((button) => {
+        button.addEventListener('click', async () => {
+          await removePlayer(button.dataset.id);
+          const players = await fetchAllPlayers();
+          renderAllPlayers(players);
+        });
+      });
+    } catch (err) {
+      console.error('Uh oh, trouble fetching players!', err);
+    }
+  };
+  
+
 
 /**
  * It takes an array of player objects, loops through them, and creates a string of HTML for each
@@ -82,7 +149,8 @@ const renderNewPlayerForm = () => {
 const init = async () => {
   const players = await fetchAllPlayers();
   renderAllPlayers(players);
-
+  const singlePlayer = await fetchSinglePlayer(4569);
+  const playerRemoved = await removePlayer(4570)
   renderNewPlayerForm();
 };
 
